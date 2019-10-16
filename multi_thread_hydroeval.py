@@ -64,7 +64,7 @@ header = ['year', 'sim_type', 'agreementindex', 'bias', 'correlationcoefficient'
 def calc_metrics(lid):
     metrics_result = []
     idx = np.where(lid_table['lid'] == lid)
-    usgs_name = '0' + str(lid_table['USGS_id'][idx[0][0]])
+    usgs_name = str(lid_table['USGS_id'][idx[0][0]])
     lat = lid_table['Y'][idx[0][0]]
     lon = lid_table['X'][idx[0][0]]
     area = lid_table['Area'][idx[0][0]]
