@@ -89,7 +89,7 @@ def calc_metrics(lid):
         print('There is no data for this station for the simulation from 2010-2014')
 
     df_assim_smos = pd.read_csv(path.join(res_data_dir, 'csv_smos/' + str(lid) + '.csv'), header=0, parse_dates=['dt'])
-    df_meas = pd.read_csv(path.join(usgs_data_dir, 'fifteen_minute', 'usgs_' + usgs_name + '.txt'), usecols=[2, 3, 4],
+    df_meas = pd.read_csv(path.join(usgs_data_dir, 'fifteen_minute', 'usgs_0' + usgs_name + '.txt'), usecols=[2, 3, 4],
                           names=['dt', 'tz', 'Q'], header=0, parse_dates=['dt'], delimiter=meas_delimiter)
 
     # CONVERT DATE TIME TO ONE TYPE OF DATETIME IN PYTHON
@@ -184,13 +184,13 @@ df_final1 = df_final.replace([np.inf, -np.inf], np.nan)
 df_final1.dropna(inplace=True, axis=0)
 df_final1.to_csv('df_final_new.csv')
 
-metrics_dict = df_final1.to_dict()
-js = (json.dumps(metrics_dict).replace(u'<', u'\\u003c')
-      .replace(u'>', u'\\u003e')
-      .replace(u'&', u'\\u0026')
-      .replace(u"'", u'\\u0027'))
-
-fp = open('multithread_metrics.json', 'w')
-# write to json file
-fp.write(js)
-fp.close()
+# metrics_dict = df_final1.to_dict()
+# js = (json.dumps(metrics_dict).replace(u'<', u'\\u003c')
+#       .replace(u'>', u'\\u003e')
+#       .replace(u'&', u'\\u0026')
+#       .replace(u"'", u'\\u0027'))
+#
+# fp = open('multithread_metrics.json', 'w')
+# # write to json file
+# fp.write(js)
+# fp.close()
