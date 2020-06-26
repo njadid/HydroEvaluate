@@ -65,8 +65,6 @@ def calc_metrics(lid):
     metrics_result = []
     idx = np.where(lid_table['lid'] == lid)
     usgs_name = str(lid_table['USGS_id'][idx[0][0]])
-    lat = lid_table['Y'][idx[0][0]]
-    lon = lid_table['X'][idx[0][0]]
     area = lid_table['Area'][idx[0][0]]
 
     # READ THE DATA FROM CSV FILES FOR EACH SIMULATION TYPE
