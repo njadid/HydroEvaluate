@@ -1,5 +1,5 @@
 #!/bin/sh
-#$ -N H2542019
+#$ -N Metrics
 #$ -j y
 #$ -cwd
 #$ -pe smp 56
@@ -7,5 +7,9 @@
 ####$ -l mf=16G
 #$ -q IFC
 
+/bin/echo Running on host: `hostname`.
+/bin/echo In directory: `pwd`
+/bin/echo Starting on: `date`
+
 source /Users/njadidoleslam/virtenvs/smap_assim/bin/activate
-python multithread_test.py
+python Q_metrics_MP.py
