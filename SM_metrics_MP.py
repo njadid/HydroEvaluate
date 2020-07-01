@@ -124,9 +124,7 @@ if __name__=='__main__':
     t_1 = datetime.now()
     total_time = (t_1-t_0)/60
     print('Total Elapsed Time = ' + "%.2f" % total_time.total_seconds() + ' Minutes.')
-    print(results)
     results_all = [sublist_L2 for sublist_L1 in results for sublist_L2 in sublist_L1]
-
     metrics_df = pd.DataFrame(results_all, columns=header)
     metrics_df.dropna(inplace=True, axis=1)
     metrics_df = metrics_df.replace([np.inf, -np.inf], np.nan)
