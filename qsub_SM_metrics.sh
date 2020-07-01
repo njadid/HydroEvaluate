@@ -1,5 +1,5 @@
 #!/bin/sh
-#$ -N Metrics_Q
+#$ -N Metrics_SM
 #$ -j y
 #$ -cwd
 #$ -pe smp 56
@@ -12,4 +12,4 @@
 /bin/echo Starting on: `date`
 
 source /Users/njadidoleslam/virtenvs/smap_assim/bin/activate
-python Q_metrics_MP.py
+python SM_metrics_MP.py

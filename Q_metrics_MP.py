@@ -54,14 +54,13 @@ year_list = [2016, 2017, 2018, 2019]
 sim_path_format = '/Users/njadidoleslam/hlm_dev/asynch_richards/results/Q/{sim_type}/{year}/{lid}.csv'
 obs_path_format = '/Users/njadidoleslam/data/usgs_obs/{year}/{lid}.csv'
 # DEFINE A LIST OF METRICS
-list1 = ['lid', 'USGS_id', 'USGS_name', 'Area', 'Slope', 't_trav', 'lat', 'lon', 'ifis_id', 'num_up_gag']
 list2 = ['nRMSE', 'nMAE', 'timing', 'norm_bias', 'ppd', 'peak_qsim', 'qsim_vol', 'qobs_vol', 'pt_change_vol',
         'tim_peak']
 header = ['year', 'sim_type', 'lid','agreementindex', 'bias', 'correlationcoefficient', 'covariance',
         'decomposed_mse', 'kge', 'log_p', 'lognashsutcliffe', 'mae', 'mse', 'nashsutcliffe', 'pbias',
         'rmse', 'rrmse', 'rsquared', 'rsr', 'volume_error'] + list2
 
-lid_table = pd.DataFrame(pd.read_csv('lid_usgs.csv'))
+
 def calc_metrics(args):
     lid,year = args
 
@@ -80,7 +79,7 @@ def calc_metrics(args):
         data['obs']['dt'] = pd.to_datetime(data['obs']['dt']).astype(int) / 10**9
     except:
         # print('err')
-        return
+        return []
     avail_sim_types = []
     for sim_type in setup_list:
         sim_fn = sim_path_format.format(sim_type=sim_type,year=year,lid=lid)
@@ -142,14 +141,15 @@ if __name__=='__main__':
     t_0 = datetime.now()
     results = pool.map(calc_metrics, arg_pool)
     t_1 = datetime.now()
-    total_time = (t_1-t_0)/60
-    print('Total Elapsed Time = ' + "%.2f" % total_time.total_seconds() + ' seconds.')
+    total_time = (t_1-t_0).total_seconds()/60
+    print('Total Elapsed Time = ' + "%.2f" %total_time  + ' minutes.')
     results_all = [sublist_L2 for sublist_L1 in results for sublist_L2 in sublist_L1]
-    df_final = pd.DataFrame(results_all, columns=header)
-    df_final1 = df_final
-    df_final1.dropna(inplace=True, axis=1)
-    df_final1 = df_final.replace([np.inf, -np.inf], np.nan)
-    df_final1.dropna(inplace=True, axis=0)
+    metrics_df = pd.DataFrame(results_all, columns=header)
+    metrics_df.dropna(inplace=True, axis=1)
+    metrics_df = metrics_df.replace([np.inf, -np.inf], np.nan)
+    metrics_df.dropna(inplace=True, axis=0)
     csv_fn = os.path.join(metric_path,metric_fn)
-    df_final1.to_csv(csv_fn, float_format='%.3f',index=False)
+    if not os.path.exists(metric_path):
+        os.makedirs(metric_path)
+    metrics_df.to_csv(csv_fn, float_format='%.3f',index=False)
     print('Finished metric calculations!')
