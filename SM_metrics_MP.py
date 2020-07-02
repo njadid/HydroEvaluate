@@ -46,9 +46,7 @@ lid_table = pd.DataFrame(pd.read_csv('sm_gage_list.csv'))
 # lid = 74725
 
 #List of simulation types 
-setup_list = ['_10009_dist_p5', '_10009_dist_p50', '_10009_dist_p95', 
-            '_10008_dist_p5', '_10008_dist_p50', '_10008_dist_p95',
-            '_10006_dist_p5', '_10006_dist_p50', '_10006_dist_p95', '_10008_dist_matched_p5']
+setup_list = ['_10009_dist_p5', '_10009_dist_p50', '_10009_dist_p95',  '_10008_dist_p5', '_10008_dist_p50', '_10008_dist_p95', '_10006_dist_p5', '_10006_dist_p50', '_10006_dist_p95', '_10008_dist_matched_p5']
 
 
 year_list = [2016, 2017, 2018, 2019]
@@ -56,7 +54,7 @@ depths = ['sm_5','sm_10','sm_20','sm_50']
 sim_path_format = '/Users/njadidoleslam/hlm_dev/asynch_richards/results/SM/{sim_type}/{year}/{lid}.csv'
 obs_path_format = '/Users/njadidoleslam/data/sm_gages/{year}/{lid}.csv'
 # DEFINE A LIST OF METRICS
-list2 = ['norm_bias', 'sim_std', 'obs_std']
+list2 = ['norm_bias', 'ref_std', 'sim_std']
 header = ['year', 'sim_type', 'lid','agreementindex', 'bias', 'correlationcoefficient', 'covariance',
         'decomposed_mse', 'kge', 'log_p', 'lognashsutcliffe', 'mae', 'mse', 'nashsutcliffe', 'pbias',
         'rmse', 'rrmse', 'rsquared', 'rsr', 'volume_error'] + list2
@@ -77,20 +75,21 @@ def calc_metrics(args):
         # print('err')
         return []
     avail_sim_types = []
-    for sim_type in setup_list:
+    for i,sim_type in enumerate(setup_list):
         sim_fn = sim_path_format.format(sim_type=sim_type,year=year,lid=lid)
         if not os.path.exists(sim_fn):
             continue
         avail_sim_types += [sim_type]
         data[sim_type] = pd.read_csv(sim_fn, header=0, parse_dates=[dt_col],
                            index_col=False)
-        # data[sim_type][dt_col] = pd.to_datetime(data[sim_type][dt_col]).astype(int) / 10**9
-    # print(year,avail_sim_types)
     for sim_type in avail_sim_types:
-        sub_data = pd.merge(data['obs'], data[sim_type], how='inner', on=dt_col, suffixes=('_obs', '_sim'))
 
+        sub_data = pd.merge(data['obs'], data[sim_type], how='inner', on=dt_col, suffixes=('_obs', '_sim'))
         sub_data.dropna(inplace=True)
+
         for depth in depths:
+
+            sub_data.dropna(inplace=True)
             obs_name = depth + '_obs'
             sim_name = depth + '_sim'
             if sub_data is None or len(sub_data) == 0:
@@ -101,13 +100,20 @@ def calc_metrics(args):
             sim_mean = np.mean(sub_data[sim_name])
             sim_std = np.std(sub_data[sim_name])
             tsim_unix = sub_data[dt_col]
+            obs_vol = np.trapz(sub_data[obs_name], sub_data[dt_col])
+            sim_vol = np.trapz(sub_data[sim_name], sub_data[dt_col])
+
+            pt_change_vol = (sim_vol - obs_vol) * 100 / obs_vol
 
             norm_bias = (sim_mean - ref_mean) / ref_std
             peak_ref = np.max(sub_data[obs_name])
             t_obs_pk = tsim_unix[sub_data[obs_name] == peak_ref]
             peak_idx_sim = np.argmin(tsim_unix - t_obs_pk)
             peak_sim = np.max(sub_data.loc[peak_idx_sim - 5 * 24:peak_idx_sim + 5 * 24][sim_name])
-            metric_additional = [norm_bias, sim_std, ref_std]
+            ppd = (peak_sim - peak_ref) / peak_ref
+            t_sim_pk = tsim_unix[sub_data[sim_name] == peak_sim]
+            tim_peak = float(np.min(1.0 / 3600 * (t_sim_pk - t_obs_pk))*1e-9)  # in hours; +ve refers to delay
+            metric_additional = [norm_bias, ref_std, sim_std]
             list_of_metrics = spotpy.objectivefunctions.calculate_all_functions(sub_data[obs_name],
                                                                                 sub_data[sim_name])
             metrics_result += [[year, sim_type+'_'+depth, lid] +[list_of_metrics[i][1] for i in range(len(list_of_metrics))] + metric_additional]
@@ -123,7 +129,7 @@ if __name__=='__main__':
     results = pool.map(calc_metrics, arg_pool)
     t_1 = datetime.now()
     total_time = (t_1-t_0)/60
-    print('Total Elapsed Time = ' + "%.2f" % total_time.total_seconds() + ' Minutes.')
+    print('Total Elapsed Time = ' + "%.2f" % total_time.total_seconds() + ' seconds.')
     results_all = [sublist_L2 for sublist_L1 in results for sublist_L2 in sublist_L1]
     metrics_df = pd.DataFrame(results_all, columns=header)
     metrics_df.dropna(inplace=True, axis=1)
@@ -133,4 +139,4 @@ if __name__=='__main__':
     if not os.path.exists(metric_path):
         os.makedirs(metric_path)
     metrics_df.to_csv(csv_fn, float_format='%.3f',index=False)
-    print('Finished SM metric calculations!')
+    print('Finished SM metrics calculations!')
